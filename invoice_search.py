@@ -33,20 +33,21 @@ def getPayPalToken(infile,environment):
   return body['access_token']
 
 def getInvoiceData(environment,paypal,invoice):
-  # Query paypal for invoice data
+  # Set authorization header
+  headers = {'Content-Type': 'application/json',
+             'Authorization': 'Bearer '+paypal}
 
   if environment == "sandbox":
-    url = "https://api.sandbox.paypal.com/v1/invoicing/invoices/"
+    url = "https://api.sandbox.paypal.com/v1/invoicing/invoices/"+invoice
   elif environment == "production":
-    url = "https://api.paypal.com/v1/invoicing/invoices/"
+    url = "https://api.paypal.com/v1/invoicing/invoices/"+invoice
   
-  headers = {'Content-Type': 'application/json',
-             'Authorization': 'Bearer'+paypal}
+  r = requests.get(url,headers=headers)
+  body = r.json()
+  #print("Body = "+r.text)
 
-  # curl -v -X GET https://api.sandbox.paypal.com/v1/invoicing/invoices/invoice -H "Content-Type: application/json" -H Authorization: Bearer <Access-Token>
+  return body
 
-  # Returns 200 and JSON
-  
 def getInvoices(environment,paypal):
   # Set headers for content and authorization
   headers = { 'Content-Type': 'application/json',
@@ -58,24 +59,24 @@ def getInvoices(environment,paypal):
   elif environment == "production":
     url = "https://api.paypal.com/v1/invoicing/search/"
 
-  data = { 'start_invoice_date': '2018-05-01 PDT',
-           'end_invoice_date': '2018-07-31 PDT',
+  data = { 'invoice_date': '2018-06-01 PDT',
            'page_size': 100
   }
 
   #print ("Data = "+str(data))
-  print ("Calling URL = "+url)
+  #print ("Calling URL = "+url)
   r = requests.post(url,headers=headers,data=json.dumps(data))
 
   body = r.json()
-#  print("Body = "+r.text)
+  #print("Body = "+r.text)
 
   count = 0
-  for invoice in body['invoices']:
-    print(str(count)+" ID = "+invoice['id']+" status = "+invoice['status']+" Invoice date = "+invoice['invoice_date'])
-    count = count + 1
+  #for invoice in body['invoices']:
+  #  print(str(count)+" ID = "+invoice['id']+" status = "+invoice['status']+" Invoice date = "+invoice['invoice_date'])
+  #  count = count + 1
 
-  print()
+  #print()
+  return body['invoices']
 
 def updateSheet(invoices):
   # Update Google sheet with invoice data
@@ -104,5 +105,10 @@ else:
 
 paypal = getPayPalToken(credfile,environment)
 invoices = getInvoices(environment,paypal)
-#updateSheet(invoices)
+for invoice in invoices:
+  invoice_data = getInvoiceData(environment,paypal,invoice['id'])
+  print(" ID = "+invoice_data['id']+" status = "+invoice_data['status']+" Invoice date = "+invoice_data['invoice_date']+" Email = "+invoice_data['billing_info'][0]['email'])
+  for item in invoice_data['items']:
+    print("    Item = "+item['name']+" Amount = "+item['unit_price']['value'])
+  #updateSheet(environment,paypal,invoices)
 
