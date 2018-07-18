@@ -40,20 +40,21 @@ def getPayPalToken(infile,environment):
   return body['access_token']
 
 def getInvoiceData(environment,paypal,invoice):
-  # Query paypal for invoice data
+  # Set authorization header
+  headers = {'Content-Type': 'application/json',
+             'Authorization': 'Bearer '+paypal}
 
   if environment == "sandbox":
-    url = "https://api.sandbox.paypal.com/v1/invoicing/invoices/"
+    url = "https://api.sandbox.paypal.com/v1/invoicing/invoices/"+invoice
   elif environment == "production":
-    url = "https://api.paypal.com/v1/invoicing/invoices/"
+    url = "https://api.paypal.com/v1/invoicing/invoices/"+invoice
   
-  headers = {'Content-Type': 'application/json',
-             'Authorization': 'Bearer'+paypal}
+  r = requests.get(url,headers=headers)
+  body = r.json()
+  #print("Body = "+r.text)
 
-  # curl -v -X GET https://api.sandbox.paypal.com/v1/invoicing/invoices/invoice -H "Content-Type: application/json" -H Authorization: Bearer <Access-Token>
+  return body
 
-  # Returns 200 and JSON
-  
 def getInvoices(environment,paypal):
   # Set headers for content and authorization
   headers = { 'Content-Type': 'application/json',
