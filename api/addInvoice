@@ -48,8 +48,11 @@ def getInvoiceData(environment,paypal,invoice):
 
   r = requests.get(url,headers=headers)
   body = r.json()
-
-  return body
+  if 'id' in body:
+    return body
+  else:
+    print("Error finding invoice: "+invoice)
+    return {}
 
 def addInvoice(record):
   table_name = "invoices"
@@ -70,11 +73,24 @@ def addInvoiceHandler(event,context):
   if 'environment' in event:
     environment = event['environment']
   else:
-    environment = 'sandbox'
+    environment = 'production'
+
+  content = {}
+  
+  content['environment'] = environment
 
   paypal = getPayPalToken(environment)
 
   if 'invoice' in event:
     invoice = event['invoice']
     record = getInvoiceData(environment,paypal,invoice)
-    addInvoice(record)
+    if 'id' in record:
+      addInvoice(record)
+      content['status'] = "Success"
+    else:
+      content['status'] = "Failure"
+    content['invoice'] = invoice
+  else:
+    content['status'] = "Failure"
+    
+  return content

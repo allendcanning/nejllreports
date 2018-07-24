@@ -79,17 +79,15 @@ def updateInvoice(record):
     t.put_item(Item=t_record)
   else:
     print("Updating record")
-    if record['status'] == 'PAID':
+    if record['status'] == 'CANCELLED':
       t.update_item(
         Key={
              'id': record['id'],
              'invoice_date': record['invoice_date']
         },
-        UpdateExpression="set payment_type=:pt, payment_date=:pd, payment_amount=:pa",
+        UpdateExpression="set status=:st",
         ExpressionAttributeValues={
-          ':pt': record['payments'][0]['type'],
-          ':pd': record['payments'][0]['date'],
-          ':pa': record['payments'][0]['amount']['value']
+          ':st': record['status']
         }
       )
 
