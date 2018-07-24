@@ -55,7 +55,7 @@ def getInvoiceData(environment,paypal,invoice):
 
   return body
 
-def getInvoices(environment,paypal):
+def getInvoices(environment,paypal,page,page_size):
   # Set headers for content and authorization
   headers = { 'Content-Type': 'application/json',
               'Authorization': 'Bearer '+paypal}
@@ -68,25 +68,64 @@ def getInvoices(environment,paypal):
 
   data = { "status": ["SENT", "PAID"],
            "invoice_date": "2018-06-01 PDT",
-           "page_size": 100 }
+           "page": page,
+           "page_size": page_size }
 
   #print ("Data = "+str(data))
   #print ("Calling URL = "+url)
   r = requests.post(url,headers=headers,data=json.dumps(data))
 
-  body = r.json()
-  #print("Body = "+r.text)
+  if r.status_code == 200:
+    body = r.json()
+    #print("Body = "+r.text)
 
-  count = 0
-  for invoice in body['invoices']:
-    #print(invoice)
-    print(str(count)+" ID = "+invoice['id']+" status = "+invoice['status']+" Invoice date = "+invoice['invoice_date'])
-    count = count + 1
+    count = 0
+    for invoice in body['invoices']:
+      #print(invoice)
+      print(str(count)+" ID = "+invoice['id']+" status = "+invoice['status']+" Invoice date = "+invoice['invoice_date'])
+      count = count + 1
 
-  #print()
-  return body['invoices']
+    #print()
+    return body['invoices']
+  else:
+    return false
 
-def updateSheet(invoices):
+def clearSheet():
+  # Setup the Sheets API
+  SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+  SERVICE_ACCOUNT_FILE="service_secret.json"
+
+  creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+  service = build('sheets', 'v4', credentials=creds)
+
+  # Call the Sheets API
+  SPREADSHEET_ID = '1NY1Ue1OA_Yzm0lg7aG-ITH0hZSRdISe_ZhMlAtlXgXU'
+
+  # Clear the SENT sheet
+  result = service.spreadsheets().values().clear(spreadsheetId=SPREADSHEET_ID,range='SENT').execute()
+  # Clear the PAID sheet
+  result = service.spreadsheets().values().clear(spreadsheetId=SPREADSHEET_ID,range='PAID').execute()
+
+def insertHeaders():
+  # Setup the Sheets API
+  SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+  SERVICE_ACCOUNT_FILE="service_secret.json"
+
+  creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+  service = build('sheets', 'v4', credentials=creds)
+
+  # Call the Sheets API
+  SPREADSHEET_ID = '1NY1Ue1OA_Yzm0lg7aG-ITH0hZSRdISe_ZhMlAtlXgXU'
+  COL = 'A1'
+  value_input_option='USER_ENTERED'
+  values = [ [ 'Invoice ID', 'Status', 'Invoice Date', 'Email', 'Amount', 'Item' ] ]
+  body = { 'values': values }
+
+  result = service.spreadsheets().values().append(spreadsheetId=SPREADSHEET_ID,range='SENT!'+COL, valueInputOption=value_input_option, body=body).execute()
+  result = service.spreadsheets().values().append(spreadsheetId=SPREADSHEET_ID,range='PAID!'+COL, valueInputOption=value_input_option, body=body).execute()
+  
+
+def updateSheet(invoice):
   # Update Google sheet with invoice data
 
   # Setup the Sheets API
@@ -99,25 +138,18 @@ def updateSheet(invoices):
   # Call the Sheets API
   SPREADSHEET_ID = '1NY1Ue1OA_Yzm0lg7aG-ITH0hZSRdISe_ZhMlAtlXgXU'
   # always set to column 1
-  range = collections.defaultdict(dict)
-  range['SENT']['ROW'] = 1
-  range['PAID']['ROW'] = 1
-  COL = 'A'
+  #range = collections.defaultdict(dict)
+  #range['SENT']['ROW'] = 1
+  #range['PAID']['ROW'] = 1
+  COL = 'A1'
   value_input_option='USER_ENTERED'
 
-  # Clear the SENT sheet
-  result = service.spreadsheets().values().clear(spreadsheetId=SPREADSHEET_ID,range='SENT').execute()
-  # Clear the PAID sheet
-  result = service.spreadsheets().values().clear(spreadsheetId=SPREADSHEET_ID,range='PAID').execute()
-  
-  for invoice in invoices:
-    values = [ [ invoice['id'], invoice['status'], invoice['invoice_date'], invoice['billing_info'][0]['email'], invoice['total_amount']['value'] ] ]
-    body = { 'values': values }
+  values = [ [ invoice['id'], invoice['status'], invoice['invoice_date'], invoice['billing_info'][0]['email'], invoice['total_amount']['value'], invoice['items'][0]['name'] ] ]
+  body = { 'values': values }
 
-    result = service.spreadsheets().values().update(spreadsheetId=SPREADSHEET_ID,
-                                                range=invoice['status']+'!'+COL+str(range[invoice['status']]['ROW']), valueInputOption=value_input_option, body=body).execute()
-    time.sleep(1)
-    range[invoice['status']]['ROW'] = range[invoice['status']]['ROW'] + 1
+  result = service.spreadsheets().values().append(spreadsheetId=SPREADSHEET_ID,
+                                                range=invoice['status']+'!'+COL, valueInputOption=value_input_option, body=body).execute()
+  #range[invoice['status']]['ROW'] = range[invoice['status']]['ROW'] + 1
 
 # Begin main program
 parser = OptionParser()
@@ -142,7 +174,19 @@ if options.verbose:
 else:
   verbose=False
 
+# Clear the google sheet
+clearSheet()
 paypal = getPayPalToken(credfile,environment)
-invoices = getInvoices(environment,paypal)
-updateSheet(invoices)
+insertHeaders()
 
+# Set default page and page_size
+page = 0
+page_size = 100
+
+invoices = getInvoices(environment,paypal,page,page_size)
+while invoices != false:
+  for invoice in invoices:
+    invoicedata = getInvoiceData(environment,paypal,invoice['id'])
+    updateSheet(invoicedata)
+  page = page + page_size
+  invoices = getInvoices(environment,paypal,page,page_size)
