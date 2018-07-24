@@ -1,0 +1,80 @@
+from __future__ import print_function
+import boto3
+from boto3.dynamodb.conditions import Key, Attr
+import json
+from botocore.vendored import requests
+
+def log_error(msg):
+  print(msg)
+
+def getPayPalToken(environment):
+  client = boto3.client('ssm')
+
+  if environment == "sandbox":
+    url = "https://api.sandbox.paypal.com/v1/oauth2/token"
+  elif environment == "production":
+    url = "https://api.paypal.com/v1/oauth2/token"
+
+  ssmpath="/paypal/"+environment+"/client_id"
+  response = client.get_parameter(Name=ssmpath,WithDecryption=False)
+
+  client_id = response['Parameter']['Value']
+
+  ssmpath="/paypal/"+environment+"/client_secret"
+  response = client.get_parameter(Name=ssmpath,WithDecryption=True)
+
+  client_secret = response['Parameter']['Value']
+
+  headers = { 'Accept': 'application/json',
+              'Accept-Language': 'en_US'}
+
+  data = "grant_type=client_credentials"
+
+  r = requests.post(url,auth=(client_id,client_secret),headers=headers,data=data)
+
+  body = r.json()
+
+  return body['access_token']
+
+def getInvoiceData(environment,paypal,invoice):
+  # Set authorization header
+  headers = {'Content-Type': 'application/json',
+             'Authorization': 'Bearer '+paypal}
+
+  if environment == "sandbox":
+    url = "https://api.sandbox.paypal.com/v1/invoicing/invoices/"+invoice
+  elif environment == "production":
+    url = "https://api.paypal.com/v1/invoicing/invoices/"+invoice
+
+  r = requests.get(url,headers=headers)
+  body = r.json()
+
+  return body
+
+def addInvoice(record):
+  table_name = "invoices"
+  dynamodb = boto3.resource('dynamodb')
+  t = dynamodb.Table(table_name)
+
+  t_record = {}
+  t_record['id'] = record['id']
+  t_record['invoice_date'] = record['invoice_date']
+  t_record['status'] = record['status']
+  t_record['email'] = record['billing_info'][0]['email']
+  t_record['amount'] = record['total_amount']['value']
+  t_record['item'] = record['items'][0]['name']
+
+  t.put_item(Item=t_record)
+
+def addInvoiceHandler(event,context):
+  if 'environment' in event:
+    environment = event['environment']
+  else:
+    environment = 'sandbox'
+
+  paypal = getPayPalToken(environment)
+
+  if 'invoice' in event:
+    invoice = event['invoice']
+    record = getInvoiceData(environment,paypal,invoice)
+    addInvoice(record)

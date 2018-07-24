@@ -5,6 +5,8 @@ from apiclient.discovery import build
 from google.oauth2 import service_account
 from httplib2 import Http
 from oauth2client import file, client, tools
+import boto3
+from boto3.dynamodb.conditions import Key, Attr
 import json
 import yaml
 import requests
@@ -15,7 +17,7 @@ from optparse import OptionParser
 def log_error(msg):
   print(msg)
 
-def getPayPalToken(infile,environment):
+def getPayPalToken(environment):
   with open(infile, 'r') as stream:
     try:
       y = yaml.load(stream)
@@ -51,7 +53,8 @@ def getInvoiceData(environment,paypal,invoice):
   
   r = requests.get(url,headers=headers)
   body = r.json()
-  #print("Body = "+r.text)
+#  if body['status'] == 'PAID':
+#    print("Body = "+r.text)
 
   return body
 
@@ -88,7 +91,7 @@ def getInvoices(environment,paypal,page,page_size):
     #print()
     return body['invoices']
   else:
-    return false
+    return 'false'
 
 def clearSheet():
   # Setup the Sheets API
@@ -118,10 +121,17 @@ def insertHeaders():
   SPREADSHEET_ID = '1NY1Ue1OA_Yzm0lg7aG-ITH0hZSRdISe_ZhMlAtlXgXU'
   COL = 'A1'
   value_input_option='USER_ENTERED'
+
+  # Set SENT headers
   values = [ [ 'Invoice ID', 'Status', 'Invoice Date', 'Email', 'Amount', 'Item' ] ]
   body = { 'values': values }
 
   result = service.spreadsheets().values().append(spreadsheetId=SPREADSHEET_ID,range='SENT!'+COL, valueInputOption=value_input_option, body=body).execute()
+
+  # Set PAID headers
+  values = [ [ 'Invoice ID', 'Status', 'Invoice Date', 'Email', 'Amount', 'Item', 'Payment Method', 'Payment Date', 'Payment Amt' ] ]
+  body = { 'values': values }
+
   result = service.spreadsheets().values().append(spreadsheetId=SPREADSHEET_ID,range='PAID!'+COL, valueInputOption=value_input_option, body=body).execute()
   
 
@@ -144,12 +154,44 @@ def updateSheet(invoice):
   COL = 'A1'
   value_input_option='USER_ENTERED'
 
-  values = [ [ invoice['id'], invoice['status'], invoice['invoice_date'], invoice['billing_info'][0]['email'], invoice['total_amount']['value'], invoice['items'][0]['name'] ] ]
+  if invoice['status'] == 'SENT':
+    values = [ [ invoice['id'], invoice['status'], invoice['invoice_date'], invoice['billing_info'][0]['email'], invoice['total_amount']['value'], invoice['items'][0]['name'] ] ]
+  elif invoice['status'] == 'PAID':
+    values = [ [ invoice['id'], invoice['status'], invoice['invoice_date'], invoice['billing_info'][0]['email'], invoice['total_amount']['value'], invoice['items'][0]['name'], invoice['payments'][0]['type'], invoice['payments'][0]['date'], invoice['payments'][0]['amount']['value'] ] ]
   body = { 'values': values }
 
   result = service.spreadsheets().values().append(spreadsheetId=SPREADSHEET_ID,
                                                 range=invoice['status']+'!'+COL, valueInputOption=value_input_option, body=body).execute()
   #range[invoice['status']]['ROW'] = range[invoice['status']]['ROW'] + 1
+
+def updateInvoice(record):
+  table_name = "invoices"
+  dynamodb = boto3.resource('dynamodb')
+  t = dynamodb.Table(table_name)
+  
+  try:
+    response = table.get_item(
+      Key={ 'id': record['id'] }
+      )
+  except ClientError as e:
+    print(e.response['Error']['Message'])
+    # Do insert here
+    t_record = {}
+    t_record['id'] = record['id']
+    t_record['invoice_date'] = record['invoice_date']
+    t_record['status'] = record['status']
+    t_record['email'] = record['billing_info'][0]['email']
+    t_record['amount'] = record['total_amount']['value']
+    t_record['item'] = record['items'][0]['name']
+
+    if record['status'] == 'PAID':
+      t_record['payment_type'] = record['payments'][0]['type']
+      t_record['payment_date'] = record['payments'][0]['date']
+      t_record['payment_amount'] = record['payments'][0]['amount']['value']
+
+    t.put_item(Item=t_record)
+  else:
+    # Do update here
 
 # Begin main program
 parser = OptionParser()
@@ -184,9 +226,10 @@ page = 0
 page_size = 100
 
 invoices = getInvoices(environment,paypal,page,page_size)
-while invoices != false:
+while invoices != 'false':
   for invoice in invoices:
     invoicedata = getInvoiceData(environment,paypal,invoice['id'])
     updateSheet(invoicedata)
+    #updateInvoice(invoicedata)
   page = page + page_size
   invoices = getInvoices(environment,paypal,page,page_size)
