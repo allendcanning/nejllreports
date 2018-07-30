@@ -69,28 +69,117 @@ def addInvoice(record):
 
   t.put_item(Item=t_record)
 
+def updateInvoice(record):
+  table_name = "invoices"
+  dynamodb = boto3.resource('dynamodb')
+  t = dynamodb.Table(table_name)
+
+  try:
+    response = t.get_item(
+      Key={ 'id': record['id'],
+            'invoice_date': record['invoice_date']
+          }
+    )
+  except ClientError as e:
+    print("Error is"+e.response['Error']['Message'])
+    # Record doesn't exist so we add it 
+    t_record = {}
+    t_record['id'] = record['id']
+    t_record['invoice_date'] = record['invoice_date']
+    t_record['status'] = record['status']
+    t_record['email'] = record['billing_info'][0]['email']
+    t_record['amount'] = record['total_amount']['value']
+    t_record['item'] = record['items'][0]['name']
+
+    t.put_item(Item=t_record)
+  else:
+    print("Updating record")
+    if record['status'] == 'PAID':
+      t.update_item(
+        Key={
+             'id': record['id'],
+             'invoice_date': record['invoice_date']
+        },
+        UpdateExpression="set payment_type=:pt, payment_date=:pd, payment_amount=:pa",
+        ExpressionAttributeValues={
+          ':pt': record['payments'][0]['type'],
+          ':pd': record['payments'][0]['date'],
+          ':pa': record['payments'][0]['amount']['value']
+        }
+      )
+
+def cancelInvoice(record):
+  table_name = "invoices"
+  dynamodb = boto3.resource('dynamodb')
+  t = dynamodb.Table(table_name)
+
+  try:
+    response = t.get_item(
+      Key={ 'id': record['id'],
+            'invoice_date': record['invoice_date']
+          }
+    )
+  except ClientError as e:
+    print("Error is"+e.response['Error']['Message'])
+    # Record doesn't exist so we add it 
+    t_record = {}
+    t_record['id'] = record['id']
+    t_record['invoice_date'] = record['invoice_date']
+    t_record['status'] = record['status']
+    t_record['email'] = record['billing_info'][0]['email']
+    t_record['amount'] = record['total_amount']['value']
+    t_record['item'] = record['items'][0]['name']
+
+    t.put_item(Item=t_record)
+  else:
+    print("Updating record")
+    if record['status'] == 'CANCELLED':
+      t.update_item(
+        Key={
+             'id': record['id'],
+             'invoice_date': record['invoice_date']
+        },
+        UpdateExpression="set status=:st",
+        ExpressionAttributeValues={
+          ':st': record['status']
+        }
+      )
+   
 def addInvoiceHandler(event,context):
   if 'environment' in event:
     environment = event['environment']
   else:
     environment = 'production'
+  
+  paypal = getPayPalToken(environment)
 
   content = {}
   
   content['environment'] = environment
-
-  paypal = getPayPalToken(environment)
-
+  
+  if 'event_type' in event:
+    event_type = event['event_type']
+  else:
+    event_type = 'INVOICING.INVOICE.CREATED'
+  
   if 'invoice' in event:
     invoice = event['invoice']
     record = getInvoiceData(environment,paypal,invoice)
+    content['invoice'] = invoice
     if 'id' in record:
-      addInvoice(record)
-      content['status'] = "Success"
+      if event_type == 'INVOICING.INVOICE.CREATED'
+        addInvoice(record)
+        content['status'] = "Success"
+      elif event_type == 'INVOICING.INVOICE.PAID'
+        updateInvoice(record)
+        content['status'] = "Success"
+      elif event_type == 'INVOICING.INVOICE.CANCELLED'
+        cancelInvoice(record)
+        content['status'] = "Success"
     else:
       content['status'] = "Failure"
-    content['invoice'] = invoice
   else:
     content['status'] = "Failure"
     
   return content
+

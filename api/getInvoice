@@ -41,28 +41,22 @@ def getPayPalToken(infile,environment):
 
   return body['access_token']
 
-def cancelInvoice(environment,paypal,invoice):
+def getInvoice(environment,paypal,invoice):
   # Set authorization header
   headers = {'Content-Type': 'application/json',
              'Authorization': 'Bearer '+paypal}
 
   if environment == "sandbox":
-    url = "https://api.sandbox.paypal.com/v1/invoicing/invoices/"+invoice+"/cancel"
+    url = "https://api.sandbox.paypal.com/v1/invoicing/invoices/"+invoice
   elif environment == "production":
-    url = "https://api.paypal.com/v1/invoicing/invoices/"+invoice+"/cancel"
+    url = "https://api.paypal.com/v1/invoicing/invoices/"+invoice
 
-  data = {
-           "subject": "Invoice cancelled",
-           "send_to_merchant": False,
-           "send_to_payer": False
-         }
+  r = requests.get(url,headers=headers)
 
-  r = requests.post(url,headers=headers,data=json.dumps(data))
-
-  if r.status_code == 204:
-    print("Successfully cancelled invoice "+invoice)
+  if r.status_code == 200:
+    print(r.json())
   else:
-    print("Error cancelling invoice "+invoice+": Status code = "+str(r.status_code)+" "+r.text)
+    print("Error finding invoice "+invoice+": Status code = "+str(r.status_code))
 
 # Begin main program
 parser = OptionParser()
@@ -97,5 +91,4 @@ else:
 # Clear the google sheet
 paypal = getPayPalToken(credfile,environment)
 
-cancelInvoice(environment,paypal,invoice)
-
+getInvoice(environment,paypal,invoice)

@@ -1,5 +1,5 @@
 #!/Library/Frameworks/Python.framework/Versions/3.6/bin/python3
-  
+
 from __future__ import print_function
 from apiclient.discovery import build
 from google.oauth2 import service_account
@@ -41,33 +41,64 @@ def getPayPalToken(infile,environment):
 
   return body['access_token']
 
-def cancelInvoice(environment,paypal,invoice):
-  # Set authorization header
-  headers = {'Content-Type': 'application/json',
-             'Authorization': 'Bearer '+paypal}
+def listInvoices(environment,paypal):
+  # Set headers for content and authorization
+  headers = { 'Content-Type': 'application/json',
+              'Authorization': 'Bearer '+paypal}
 
+  # Get paypal url based on environment
   if environment == "sandbox":
-    url = "https://api.sandbox.paypal.com/v1/invoicing/invoices/"+invoice+"/cancel"
+    url = "https://api.sandbox.paypal.com/v1/invoicing/invoices/"
   elif environment == "production":
-    url = "https://api.paypal.com/v1/invoicing/invoices/"+invoice+"/cancel"
-
-  data = {
-           "subject": "Invoice cancelled",
-           "send_to_merchant": False,
-           "send_to_payer": False
-         }
+    url = "https://api.paypal.com/v1/invoicing/invoices/"
 
   r = requests.post(url,headers=headers,data=json.dumps(data))
 
-  if r.status_code == 204:
-    print("Successfully cancelled invoice "+invoice)
+  #print("Response is "+r.text)
+
+  print("Status code is "+str(r.status_code))
+
+  if r.status_code == 201:
+    #body = r.json()
+    sendInvoice(environment,paypal,body['id'])
+    #print("Body = "+r.text)
+
+def listInvoices(environment,paypal):
+  page = 0
+  page_size = 100
+  # Set headers for content and authorization
+  headers = { 'Content-Type': 'application/json',
+              'Authorization': 'Bearer '+paypal}
+
+  # Get paypal url based on environment
+  if environment == "sandbox":
+    url = "https://api.sandbox.paypal.com/v1/invoicing/search/"
+  elif environment == "production":
+    url = "https://api.paypal.com/v1/invoicing/search/"
+
+  data = { "status": ["SENT", "PAID"],
+           "invoice_date": "2018-07-01 PDT",
+           "page": page,
+           "page_size": page_size }
+
+  r = requests.post(url,headers=headers,data=json.dumps(data))
+
+  if r.status_code == 200:
+    body = r.json()
+
+    count = 0
+    for invoice in body['invoices']:
+      #print(invoice)
+      print(str(count)+" ID = "+invoice['id']+" email = "+invoice['billing_info'][0]['email']+" status = "+invoice['status']+" Invoice date = "+invoice['invoice_date'])
+      count = count + 1
+
+    return body['invoices']
   else:
-    print("Error cancelling invoice "+invoice+": Status code = "+str(r.status_code)+" "+r.text)
+    return 'false'
 
 # Begin main program
 parser = OptionParser()
 parser.add_option("-e","--environment", dest="environment", help="Paypal Environment -- OPTIONAL defaults to sandbox [ sandbox, production ]")
-parser.add_option("-i","--invoice", dest="invoice", help="Paypal Invoice -- REQUIRED")
 parser.add_option("-f","--file",dest="credfile", help="Paypal Credential file (YAML) -- OPTIONAL defaults to paypal.yaml")
 parser.add_option("-v","--verbose",dest="verbose", help="Verbose")
 
@@ -83,12 +114,6 @@ if options.credfile:
 else:
   credfile = "paypal.yaml"
 
-if options.invoice:
-  invoice = options.invoice
-else:
-  log_error("Please supply an invoice!")
-  exit(1)
-
 if options.verbose:
   verbose=True
 else:
@@ -97,5 +122,5 @@ else:
 # Clear the google sheet
 paypal = getPayPalToken(credfile,environment)
 
-cancelInvoice(environment,paypal,invoice)
+listInvoices(environment,paypal)
 

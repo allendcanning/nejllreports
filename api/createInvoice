@@ -1,0 +1,152 @@
+#!/Library/Frameworks/Python.framework/Versions/3.6/bin/python3
+
+from __future__ import print_function
+from apiclient.discovery import build
+from google.oauth2 import service_account
+from httplib2 import Http
+from oauth2client import file, client, tools
+import boto3
+from boto3.dynamodb.conditions import Key, Attr
+import json
+import yaml
+import requests
+import time
+import collections
+from optparse import OptionParser
+
+def log_error(msg):
+  print(msg)
+
+def getPayPalToken(infile,environment):
+  with open(infile, 'r') as stream:
+    try:
+      y = yaml.load(stream)
+    except yaml.YAMLError as e:
+      log_error(e)
+      exit(1)
+
+  if environment == "sandbox":
+    url = "https://api.sandbox.paypal.com/v1/oauth2/token"
+  elif environment == "production":
+    url = "https://api.paypal.com/v1/oauth2/token"
+
+  headers = { 'Accept': 'application/json',
+              'Accept-Language': 'en_US'}
+
+  data = "grant_type=client_credentials"
+
+  r = requests.post(url,auth=(y["environment"][environment]['client_id'],y["environment"][environment]['client_secret']),headers=headers,data=data)
+
+  body = r.json()
+
+  return body['access_token']
+
+def sendInvoice(environment,paypal,invoice):
+  # Set headers for content and authorization
+  headers = { 'Content-Type': 'application/json',
+              'Authorization': 'Bearer '+paypal}
+
+  # Get paypal url based on environment
+  if environment == "sandbox":
+    url = "https://api.sandbox.paypal.com/v1/invoicing/invoices/"+invoice+"/send"
+  elif environment == "production":
+    url = "https://api.paypal.com/v1/invoicing/invoices/"+invoice+"/send"
+
+  r = requests.post(url,headers=headers)
+
+  #print("Response is "+r.text)
+
+  print("Status code is "+str(r.status_code))
+
+  if r.status_code == 202:
+    #body = r.json()
+    #print("Body = "+r.text)
+    print("Successfully sent invoice "+invoice)
+  
+
+def createInvoice(environment,paypal):
+  # Set headers for content and authorization
+  headers = { 'Content-Type': 'application/json',
+              'Authorization': 'Bearer '+paypal}
+
+  # Get paypal url based on environment
+  if environment == "sandbox":
+    url = "https://api.sandbox.paypal.com/v1/invoicing/invoices/"
+  elif environment == "production":
+    url = "https://api.paypal.com/v1/invoicing/invoices/"
+
+  data = { "merchant_info": {
+             "email": "paypal@nejll.org",
+             "first_name": "Allen",
+             "last_name": "Canning",
+             "business_name": "NEJLL",
+             "phone": {
+               "country_code": "001",
+               "national_number": "9788076564"
+             },
+             "address": {
+               "line1": "65 Marblehead St",
+               "city": "North Andover",
+               "state": "MA",
+               "postal_code": "08145",
+               "country_code": "US"
+             },
+           },
+           "billing_info": [
+             {
+               "email": "canning@canningbranch.com",
+             }
+           ],
+           "items": [
+             {
+               "name": "MXB College Prep Tuition Payment",
+               "quantity": 1,
+               "unit_price": {
+                 "currency": "USD",
+                 "value": "1000.00"
+               }
+             }
+           ],
+           "note": "Thank you for your business.",
+         }
+
+  r = requests.post(url,headers=headers,data=json.dumps(data))
+
+  #print("Response is "+r.text)
+
+  print("Status code is "+str(r.status_code))
+
+  if r.status_code == 201:
+    #body = r.json()
+    sendInvoice(environment,paypal,body['id'])
+    #print("Body = "+r.text)
+             
+
+# Begin main program
+parser = OptionParser()
+parser.add_option("-e","--environment", dest="environment", help="Paypal Environment -- OPTIONAL defaults to sandbox [ sandbox, production ]")
+parser.add_option("-f","--file",dest="credfile", help="Paypal Credential file (YAML) -- OPTIONAL defaults to paypal.yaml")
+parser.add_option("-v","--verbose",dest="verbose", help="Verbose")
+
+(options,args) = parser.parse_args()
+
+if options.environment:
+  environment = options.environment
+else:
+  environment = "sandbox"
+
+if options.credfile:
+  credfile = options.credfile
+else:
+  credfile = "paypal.yaml"
+
+if options.verbose:
+  verbose=True
+else:
+  verbose=False
+
+# Clear the google sheet
+paypal = getPayPalToken(credfile,environment)
+
+createInvoice(environment,paypal)
+
