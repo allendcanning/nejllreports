@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: adds an invoice
+Resources:
+  addInvoiceFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: lambda_function.addInvoiceHandler
+      Runtime: python3.6
+      CodeUri: ./
+      Events:
+        addInvoiceAPI:
+          Type: Api
+          Properties:
+            Path: /addInvoice
+            Method: GET
+  addInvoiceAPI:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: addInvoice-API
+  getMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: GET
+      ResourceId: !GetAtt addInvoiceAPI.RootResourceId
+      RestApiId: !Ref addInvoiceAPI
+      AuthorizationType: NONE
+      Integrations:
+        Type: AWS
+        Uri: !Ref addInvoiceFunction
+      EndpointConfiguration: REGIONAL
