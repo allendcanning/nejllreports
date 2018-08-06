@@ -3,7 +3,7 @@ version: 0.2
 phases:
   install:
     commands:
-      - aws cloudformation package --region us-east-1 --template-file samTemplate.yaml --s3-bucket nejllreports-src-530317771161 --output-template --file samTemplateOut.yaml
+      - aws cloudformation package --region us-east-1 --template-file samTemplate.yaml --s3-bucket nejllreports-src-530317771161 --output-template-file samTemplateOut.yaml
 artifacts:
   type: zip
   files:
