@@ -1,0 +1,100 @@
+#!/bin/bash
+
+# Set some default color output
+ESC_SEQ="\033[33;"
+FG_RED="${ESC_SEQ}31m"
+FG_GREEN="${ESC_SEQ}32m"
+RESET_ALL="${ESC_SEQ}0m"
+
+function print_usage () {
+        echo "$0: [ -i <AWS profile> ] [-r <AWS region> ] -n <Stack Name> -t <JSON/YAML Template file> -p <JSON/YAML Parameter file>"
+        echo
+	echo "-r:  <AWS region> -- OPTIONAL, defaults to us-east-1"
+	echo "-i:  <AWS profile> -- OPTIONAL"
+        echo "-n:  <AWS Stack Name>"
+        echo "-t:  <AWS JSON/YAML Cloud Formation Template file> --REQUIRED"
+        echo "-p:  <AWS JSON/YAML Parameter file> -- OPTIONAL"
+        echo
+}
+
+function log_error () {
+  MSG=$1
+
+  echo 
+  echo -e "${FG_RED}ERROR: $MSG${RESET_ALL}"
+  echo 
+}
+
+while getopts r:i:n:t:p: OPT
+do
+	case $OPT in
+		r)
+			if [ -n "$OPTARG" ]; then
+				REGION=$OPTARG
+			else
+				print_usage
+				exit 1
+			fi
+			;;
+		i)
+			if [ -n "$OPTARG" ]; then
+				PROFILE=$OPTARG
+			else
+				print_usage
+				exit 1
+			fi
+			;;
+		n)
+			if [ -n "$OPTARG" ]; then
+				NAME=$OPTARG
+			else
+				print_usage
+				exit 1
+			fi
+			;;
+		t)
+			if [ -n "$OPTARG" ]; then
+				TEMPLATE=$OPTARG
+			else
+				print_usage
+				exit 1
+			fi
+			;;
+		p)
+			if [ -n "$OPTARG" ]; then
+				PARAMS=$OPTARG
+			else
+				print_usage
+				exit 1
+			fi
+			;;
+		*)
+			print_usage
+			exit 1
+			;;
+	esac
+done
+
+if [ -n "$REGION" ]; then
+	REGION="--region $REGION"
+else
+	REGION="--region us-east-1"
+fi
+if [ -n "$PROFILE" ]; then
+	PROFILE="--profile $PROFILE"
+fi
+if [ ! -n "$NAME" ]; then
+	log_error "Stack name not specified."
+	exit 1
+fi
+
+if [ ! -f "$TEMPLATE" ]; then
+	log_error "Template file not found: $TEMPLATE"
+	exit 1
+fi
+
+if [ -f "$PARAMS" ]; then
+	ARGS="--parameters file://${PARAMS}"
+fi
+
+aws cloudformation create-stack $REGION $PROFILE --stack-name ${NAME} --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM --template-body file://${TEMPLATE} ${ARGS}

@@ -1,0 +1,27 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS Cloudformation stack for S3 bucket'
+Parameters:
+  BucketName: 
+    Type: String
+  Versioning:
+    Type: String
+    Default: "Enabled"
+    AllowedValues: [Enabled, Suspended]
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${BucketName}-${AWS::AccountId}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+      VersioningConfiguration:
+        Status: !Ref Versioning
+      Tags:
+        - Key: Name
+          Value: !Ref BucketName
+Outputs:
+  BucketRef:
+    Value: !Ref S3Bucket

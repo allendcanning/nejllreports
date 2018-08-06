@@ -18,14 +18,3 @@ Resources:
     Type: AWS::ApiGateway::RestApi
     Properties:
       Name: addInvoice-API
-  getMethod:
-    Type: AWS::ApiGateway::Method
-    Properties:
-      HttpMethod: GET
-      ResourceId: !GetAtt addInvoiceAPI.RootResourceId
-      RestApiId: !Ref addInvoiceAPI
-      AuthorizationType: NONE
-      Integrations:
-        Type: AWS
-        Uri: !Ref addInvoiceFunction
-      EndpointConfiguration: REGIONAL
