@@ -1,0 +1,20 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: adds an invoice
+Resources:
+  addInvoiceAPI:
+    Properties:
+      Name: addInvoice-API
+    Type: AWS::ApiGateway::RestApi
+  addInvoiceFunction:
+    Properties:
+      CodeUri: s3://nejllreports-src-530317771161/1256e49584cc35b1a283babd456f4cae
+      Events:
+        addInvoiceAPI:
+          Properties:
+            Method: GET
+            Path: /addInvoice
+          Type: Api
+      Handler: lambda_function.addInvoiceHandler
+      Runtime: python3.6
+    Type: AWS::Serverless::Function
+Transform: AWS::Serverless-2016-10-31
