@@ -13,8 +13,19 @@ Resources:
           Type: Api
           Properties:
             Path: /addInvoice
-            Method: get
+            Method: GET
   addInvoiceAPI:
     Type: AWS::ApiGateway::RestApi
     Properties:
       Name: addInvoice-API
+  addInvoiceApiGet:
+    Type:  AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: GET
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: GET
+        RequestParameters:
+          environment: integration.request.querystring.environment
+          invoice: integration.request.querystring.invoice
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/
