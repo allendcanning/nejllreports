@@ -5,7 +5,7 @@ Resources:
   addInvoiceFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: lambda_function.addInvoiceHandler
+      Handler: addInvoice.addInvoiceHandler
       Runtime: python3.6
       CodeUri: ./
       Events:
