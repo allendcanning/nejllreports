@@ -8,6 +8,8 @@ Resources:
       Handler: listInvoices.addInvoiceHandler
       Runtime: python3.6
       CodeUri: ./
+      Policies:
+        - AmazonDynamicDBFullAccess
       Events:
         addInvoiceAPI:
           Type: Api
@@ -20,6 +22,9 @@ Resources:
       Handler: listInvoices.listInvoiceHandler
       Runtime: python3.6
       CodeUri: ./
+      Policies:
+        - AmazonDynamicDBFullAccess
+        - ssmPayPal
       Events:
         listInvoiceAPI:
           Type: Api
