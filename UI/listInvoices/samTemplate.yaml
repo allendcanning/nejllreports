@@ -34,7 +34,7 @@ Resources:
   addItemFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: listInvoices.addItemHandler
+      Handler: listInvoices.listItemHandler
       Runtime: python3.6
       CodeUri: ./
       Policies:
