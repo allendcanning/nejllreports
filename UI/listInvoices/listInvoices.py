@@ -1,10 +1,9 @@
 from __future__ import print_function
 from __future__ import division
-
-import os, time
-from datetime import datetime
+import json
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
+from botocore.vendored import requests
 
 os.environ['TZ'] = 'US/Eastern'
 time.tzset()
