@@ -9,7 +9,7 @@ Resources:
       Runtime: python3.6
       CodeUri: ./
       Policies:
-        - AmazonDynamicDBFullAccess
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
       Events:
         addInvoiceAPI:
           Type: Api
@@ -23,8 +23,8 @@ Resources:
       Runtime: python3.6
       CodeUri: ./
       Policies:
-        - AmazonDynamicDBFullAccess
-        - ssmPayPal
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+        - arn:aws:iam::530317771161:policy/ssmPayPal
       Events:
         listInvoiceAPI:
           Type: Api
