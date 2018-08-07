@@ -204,7 +204,12 @@ def addInvoiceHandler(event,context):
   else:
     content['status'] = "Failure"
 
-  return content
+  return { 'statusCode': 200,
+           'headers': {
+              "Content-type": "text/html",
+            },
+            'body': content
+          }
 
 def listInvoiceHandler(event, context):
   if 'action' in event:
@@ -256,6 +261,9 @@ def listInvoiceHandler(event, context):
   content += "</form>"
 
   content += "</body></html>"
-  return content
-
-
+  return { 'statusCode': 200,
+           'headers': {
+              "Content-type": "text/html",
+            },
+            'body': content
+          }
