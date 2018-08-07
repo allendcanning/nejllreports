@@ -186,15 +186,18 @@ def listInvoices():
   return items['Items']
 
 def listItemHandler(event, context):
-  if 'action' in event:
-    action=event['action']
+  # Put post parameters into dict
+  postparams = event['body'].json()
+
+  if 'action' in postparams:
+    action=postparams['action']
   else:
     action="Form"
 
   item = ""
 
-  if 'item' in event:
-    item = event['item']
+  if 'item' in postparams:
+    item = postparams['item']
 
   content = "<html><head><title>MXB Invoice Items</title></head><body>"
   content += "<h3>MXB Invoice Items</h3>"
