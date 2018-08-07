@@ -46,6 +46,27 @@ def getPayPalToken(environment):
 
   return body['access_token']
 
+def listItems():
+  table_name = "invoice_items"
+  t = dynamodb.Table(table_name)
+  items = t.scan()
+
+  return items['Items']
+
+def addItem(item):
+  record = {}
+  record['id'] = int(time.time())
+  record['name'] = item
+
+  table_name = "invoice_items"
+  t = dynamodb.Table(table_name)
+  t.put_item(Item=record)
+
+def deleteItem(item):
+  table_name = "invoice_items"
+  t = dynamodb.Table(table_name)
+  t.delete_item(Key={ 'id': int(item) })
+
 def getInvoiceData(environment,paypal,invoice):
   # Set authorization header
   headers = {'Content-Type': 'application/json',
@@ -164,6 +185,53 @@ def listInvoices():
 
   return items['Items']
 
+def listItemHandler(event, context):
+  if 'action' in event:
+    action=event['action']
+  else:
+    action="Form"
+
+  item = ""
+
+  if 'item' in event:
+    item = event['item']
+
+  content = "<html><head><title>MXB Invoice Items</title></head><body>"
+  content += "<h3>MXB Invoice Items</h3>"
+
+  if action == 'Add':
+    addItem(item)
+  elif action == 'Delete':
+    deleteItem(item)
+
+  # Print out HTML content
+  items = listItems()
+  content += '<form method="POST">'
+  content += '<table width="70%">'
+  content += '<tr align="left"><th>ID</th><th>Item Name</th></tr>'
+  for item in items:
+    content += '<tr align="left"><td><input type="radio" name="id" value="'+str(item['id'])+'">'+str(item['id'])+'</td><td>'+item['name']+'</td></tr>'
+  content += "</table>"
+  content += '<input type=hidden name="action" value="Delete">'
+  content += 'Select Item Above to Delete: <input type="submit" name="Delete" value="Delete">'
+  content += '<input type="reset">'
+  content += "</form>"
+  content += '<form method="POST">'
+  content += '<input type=hidden name="action" value="Add">'
+  content += '<input type="text" name="item" value="">'
+  content += 'Enter Item Name: <input type="submit" name="Add" value="Add">'
+  content += '<input type="reset">'
+  content += "</form>"
+  content += '<a href="/PROD/listInvoice">Back to Invoices</a>'
+
+  content += "</body></html>"
+  return { 'statusCode': 200,
+           'headers': {
+              "Content-type": "text/html",
+            },
+            'body': content
+          }
+
 def addInvoiceHandler(event,context):
   if 'environment' in event:
     environment = event['environment']
@@ -211,6 +279,7 @@ def addInvoiceHandler(event,context):
             'body': content
           }
 
+
 def listInvoiceHandler(event, context):
   if 'action' in event:
     action=event['action']
@@ -231,7 +300,7 @@ def listInvoiceHandler(event, context):
   # Print out HTML content
   invoices = listInvoices()
   content += '<form method="POST">'
-  content += '<table width="50%">'
+  content += '<table width="85%">'
   content += '<tr align="left"><th>Invoice ID</th><th>Email</th><th>Status</th><th>Item Name</th><th>Amount</th><th>Invoice Date</th><th>Payment Amount</th><th>Payment Date</th><Payment Type</th></tr>'
   for invoice in invoices:
     content += '<tr align="left"><td><input type="radio" name="id" value="'+str(invoice['id'])+'">'+str(invoice['id'])+'</td><td>'+invoice['email']+'</td><td>'+invoice['invoice_status']+'</td><td>'+invoice['item']+'</td><td>'+invoice['amount']+'<td></td>'+invoice['invoice_date']+'</td>'
@@ -253,7 +322,7 @@ def listInvoiceHandler(event, context):
   content += 'Select Invoice Above to Cancel: <input type="submit" name="Cancel" value="Cancel">'
   content += '<input type="reset">'
   content += "</form>"
-  content += '<form method="POST">'
+  content += '<form method="POST" action="/PROD/addItem">'
   content += '<input type=hidden name="action" value="Add">'
   content += '<input type="text" name="item" value="">'
   content += 'Enter Item Name: <input type="submit" name="Add" value="Add">'

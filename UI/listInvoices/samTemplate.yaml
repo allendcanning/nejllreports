@@ -31,3 +31,17 @@ Resources:
           Properties:
             Path: /listInvoice
             Method: get
+  addItemFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: listInvoices.addItemHandler
+      Runtime: python3.6
+      CodeUri: ./
+      Policies:
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+      Events:
+        addItemAPI:
+          Type: Api
+          Properties:
+            Path: /addItem
+            Method: post
