@@ -187,7 +187,7 @@ def listInvoices():
 
 def listItemHandler(event, context):
   # Put post parameters into dict
-  postparams = event['body'].json()
+  postparams = json.loads(event['body'])
 
   if 'action' in postparams:
     action=postparams['action']
