@@ -13,7 +13,7 @@ Resources:
           Type: Api
           Properties:
             Path: /addInvoice
-            Method: get
+            Method: post
   listInvoiceFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -21,8 +21,8 @@ Resources:
       Runtime: python3.6
       CodeUri: ./
       Events:
-        addInvoiceAPI:
+        listInvoiceAPI:
           Type: Api
           Properties:
             Path: /listInvoice
-            Method: put
+            Method: get
