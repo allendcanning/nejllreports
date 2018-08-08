@@ -202,6 +202,7 @@ def addItemHandler(event, context):
   else:
     content = "No item to add"
 
+  content += '<p><a href="/Prod/listInvoice">Back to Invoices</a>'
   return { 'statusCode': 200,
            'headers': {
               "Content-type": "text/html",
