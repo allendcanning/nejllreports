@@ -282,9 +282,9 @@ def listInvoiceHandler(event, context):
   invoices = listInvoices()
   content += '<form method="POST">'
   content += '<table width="85%">'
-  content += '<tr align="left"><th>Invoice ID</th><th>Email</th><th>Status</th><th>Item Name</th><th>Amount</th><th>Invoice Date</th><th>Payment Amount</th><th>Payment Date</th><Payment Type</th></tr>'
+  content += '<tr align="left"><th>Invoice ID</th><th>Email</th><th>Status</th><th>Item Name</th><th>Amount</th><th>Invoice Date</th><th>Payment Amount</th><th>Payment Date</th><th>Payment Type</th></tr>'
   for invoice in invoices:
-    content += '<tr align="left"><td><input type="hidden" name="id" value="'+str(invoice['id'])+'">'+str(invoice['invoice_id'])+'</td><td>'+invoice['email']+'</td><td>'+invoice['invoice_status']+'</td><td>'+invoice['item']+'</td><td>'+invoice['amount']+'</td><td>'+invoice['invoice_date']+'</td>'
+    content += '<tr align="left"><td><input type="radio" name="id" value="'+str(invoice['id'])+'">'+str(invoice['invoice_id'])+'</td><td>'+invoice['email']+'</td><td>'+invoice['invoice_status']+'</td><td>'+invoice['item']+'</td><td>'+invoice['amount']+'</td><td>'+invoice['invoice_date']+'</td>'
     if 'payment_amount' in invoice:
       content += '<td>'+invoice['payment_amount']+'</td>'
     else:
