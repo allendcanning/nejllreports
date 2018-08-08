@@ -10,6 +10,7 @@ Resources:
       CodeUri: ./
       Policies:
         - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+        - arn:aws:iam::530317771161:policy/ssmPayPal
       Events:
         addInvoiceAPI:
           Type: Api
