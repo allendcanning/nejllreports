@@ -5,6 +5,7 @@ import json
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.vendored import requests
+from urllib.parse import unquote
 
 os.environ['TZ'] = 'US/Eastern'
 time.tzset()
@@ -193,7 +194,7 @@ def addItemHandler(event, context):
       key = token.split('=')[0]
       value = token.split('=')[1]
       if key == 'item':
-        item = value
+        item = unquote(value)
 
   if item != '':
     addItem(item)
