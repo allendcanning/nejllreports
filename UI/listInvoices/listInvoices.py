@@ -291,21 +291,27 @@ def addInvoiceHandler(event,context):
   # Parse the post parameters
   if 'body' in event:
     postparams = event['body']
-    for token in postparams.split('&'):
-      key = token.split('=')[0]
-      value = token.split('=')[1]
+    if '&' in postparams:
+      for token in postparams.split('&'):
+        key = token.split('=')[0]
+        value = token.split('=')[1]
+        if key == 'action':
+          action = unquote_plus(value)
+        if key == 'environment':
+          environment = unquote_plus(value)
+        else:
+          environment = "production"
+        if key == 'email':
+          email = unquote_plus(value)
+        if key == 'item':
+          item = unquote_plus(value)
+        if key == 'amount':
+          amount = unquote_plus(value)
+    else:
+      key = postparams.split('=')[0]
+      value = postparams.split('=')[1]
       if key == 'action':
         action = unquote_plus(value)
-      if key == 'environment':
-        environment = unquote_plus(value)
-      else:
-        environment = "production"
-      if key == 'email':
-        email = unquote_plus(value)
-      if key == 'item':
-        item = unquote_plus(value)
-      if key == 'amount':
-        amount = unquote_plus(value)
 
   paypal = getPayPalToken(environment)
 
