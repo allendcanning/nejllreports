@@ -312,6 +312,10 @@ def addInvoiceHandler(event,context):
       value = postparams.split('=')[1]
       if key == 'action':
         action = unquote_plus(value)
+      if key == 'environment':
+        environment = unquote_plus(value)
+      else:
+        environment = "production"
 
   paypal = getPayPalToken(environment)
 
