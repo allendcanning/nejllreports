@@ -186,16 +186,20 @@ def listInvoices():
   return items['Items']
 
 def addItemHandler(event, context):
-  log_error("Event = "+str(event))
   if 'body' in event:
-    postparams = json.loads(event['body'])
+    # Parse the post parameters
+    postparams = event['body']
+    for token in postparams.split('&'):
+      key = token.split('=')[0]
+      value = token.split('=')[1]
+      if key == 'item':
+        item = value
 
-  if 'item' in postparams:
-    item = postparams['item']
-
-  addItem(item)
-
-  content = "Successfully added item: "+item
+  if item != '':
+    addItem(item)
+    content = "Successfully added item: "+item
+  else:
+    content = "No item to add"
 
   return { 'statusCode': 200,
            'headers': {
