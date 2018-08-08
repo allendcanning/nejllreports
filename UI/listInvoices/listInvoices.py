@@ -88,6 +88,78 @@ def getInvoiceData(environment,paypal,invoice):
     log_error("Error finding invoice: "+invoice)
     return {}
 
+def sendInvoice(environment,paypal,invoice):
+  # Set headers for content and authorization
+  headers = { 'Content-Type': 'application/json',
+              'Authorization': 'Bearer '+paypal}
+
+  # Get paypal url based on environment
+  if environment == "sandbox":
+    url = "https://api.sandbox.paypal.com/v1/invoicing/invoices/"+invoice+"/send"
+  elif environment == "production":
+    url = "https://api.paypal.com/v1/invoicing/invoices/"+invoice+"/send"
+
+  r = requests.post(url,headers=headers)
+
+  if r.status_code == 202:
+    print("Successfully sent invoice "+invoice)
+
+def createInvoice(environment,paypal,record):
+  # Set headers for content and authorization
+  headers = { 'Content-Type': 'application/json',
+              'Authorization': 'Bearer '+paypal}
+
+  # Get paypal url based on environment
+  if environment == "sandbox":
+    url = "https://api.sandbox.paypal.com/v1/invoicing/invoices/"
+  elif environment == "production":
+    url = "https://api.paypal.com/v1/invoicing/invoices/"
+
+  data = { "merchant_info": {
+             "email": "paypal@nejll.org",
+             "first_name": "Allen",
+             "last_name": "Canning",
+             "business_name": "NEJLL",
+             "phone": {
+               "country_code": "001",
+               "national_number": "9788076564"
+             },
+             "address": {
+               "line1": "65 Marblehead St",
+               "city": "North Andover",
+               "state": "MA",
+               "postal_code": "08145",
+               "country_code": "US"
+             },
+           },
+           "billing_info": [
+             {
+               "email": record['email'],
+             }
+           ],
+           "items": [
+             {
+               "name": record['item'],
+               "quantity": 1,
+               "unit_price": {
+                 "currency": "USD",
+                "value": record['amount']
+               }
+             }
+           ],
+           "note": "Thank you for your business.",
+         }
+
+  r = requests.post(url,headers=headers,data=json.dumps(data))
+
+  if r.status_code == 201:
+    body = r.json()
+    sendInvoice(environment,paypal,body['id'])
+    body['status'] = 'Success'
+    return body
+  else:
+    return { "status": "Failure" }
+
 def addInvoice(record):
   table_name = "invoices"
   dynamodb = boto3.resource('dynamodb')
@@ -214,44 +286,51 @@ def addItemHandler(event, context):
           }
 
 def addInvoiceHandler(event,context):
-  if 'environment' in event:
-    environment = event['environment']
-  else:
-    environment = 'production'
+  record = {}
+
+  # Parse the post parameters
+  if 'body' in event:
+    postparams = event['body']
+    for token in postparams.split('&'):
+      key = token.split('=')[0]
+      value = token.split('=')[1]
+      if key == 'action':
+        action = unquote_plus(value)
+      if key == 'environment':
+        environment = unquote_plus(value)
+      else:
+        environment = "production"
+      if key == 'email':
+        email = unquote_plus(value)
+      if key == 'item':
+        item = unquote_plus(value)
+      if key == 'amount':
+        amount = unquote_plus(value)
 
   paypal = getPayPalToken(environment)
 
-  content = {}
+  if action == 'Form':
+    items = listItems()
+    content = "<html><head><title>MXB Create Invoice</title></head><body>"
+    content += "<h3>MXB Create Invoice</h3>"
 
-  content['environment'] = environment
-
-  if 'event_type' in event:
-    event_type = event['event_type']
-  else:
-    event_type = 'INVOICING.INVOICE.UNKNOWN'
-
-  content['event_type'] = event_type
-  log_error("Event type = "+event_type)
-
-  if 'invoice' in event:
-    invoice = event['invoice']
-    log_error('Invoice = '+invoice)
-    record = getInvoiceData(environment,paypal,invoice)
-    content['invoice'] = invoice
-    if 'id' in record:
-      if event_type == 'INVOICING.INVOICE.CREATED':
-        addInvoice(record)
-        content['status'] = "Success"
-      elif event_type == 'INVOICING.INVOICE.PAID':
-        updateInvoice(record)
-        content['status'] = "Success"
-      elif event_type == 'INVOICING.INVOICE.CANCELLED':
-        cancelInvoice(record)
-        content['status'] = "Success"
-    else:
-      content['status'] = "Failure"
-  else:
-    content['status'] = "Failure"
+    content += '<form method="post" action="">'
+    content += '<input type="hidden" name="action" value="Process">'
+    content += '<p>Enter billing email address: <input type="email" name="email">'
+    content += '<p>Select billing item: <select name="item">'
+    for item in items:
+      content += '<option value="'+item['name']+'">'+item['name']+'</option>'
+    content += '</select>'
+    content += '<p>Enter amount: $<input type="text" name="amount">'
+    content += '<input type="submit" value="Create Invoice">'
+    content += '</form></body></html>'
+  elif action == 'Process':
+    result = createInvoice(environment,paypal,record)
+    if 'status' in result:
+      if result['status'] == 'Success':
+        content = '<p>Successfully added invoice '+result['number']+'<p><a href="/Prod/listInvoice">Back to Invoices</a>'
+      else:
+        content = '<p>Failed to add invoice'
 
   return { 'statusCode': 200,
            'headers': {
@@ -303,10 +382,14 @@ def listInvoiceHandler(event, context):
   content += 'Select Invoice Above to Cancel: <input type="submit" name="Cancel" value="Cancel">'
   content += '<input type="reset">'
   content += "</form>"
-  content += '<form method="POST" action="/Prod/addItem">'
+  content += '<hr><form method="POST" action="/Prod/addInvoice">'
+  content += '<input type="hidden" name="action" value="Form">'
+  content += '<input type="submit" value="Add Invoice">'
+  content += '</form>'
+  content += '<hr><form method="POST" action="/Prod/addItem">'
   content += '<input type=hidden name="action" value="Add">'
-  content += '<input type="text" name="item" value="">'
-  content += 'Enter Item Name: <input type="submit" name="Add" value="Add">'
+  content += 'Enter Item Name: <input type="text" name="item" value="">'
+  content += '<input type="submit" name="Add" value="Add">'
   content += '<input type="reset">'
   content += "</form>"
 
