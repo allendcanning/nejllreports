@@ -185,49 +185,17 @@ def listInvoices():
 
   return items['Items']
 
-def listItemHandler(event, context):
-  # Put post parameters into dict
-  postparams = json.loads(event['body'])
-
-  if 'action' in postparams:
-    action=postparams['action']
-  else:
-    action="Form"
-
-  item = ""
+def addItemHandler(event, context):
+  if 'body' in event:
+    postparams = json.loads(event['body'])
 
   if 'item' in postparams:
     item = postparams['item']
 
-  content = "<html><head><title>MXB Invoice Items</title></head><body>"
-  content += "<h3>MXB Invoice Items</h3>"
+  addItem(item)
 
-  if action == 'Add':
-    addItem(item)
-  elif action == 'Delete':
-    deleteItem(item)
+  content = "Successfully added item: "+item
 
-  # Print out HTML content
-  items = listItems()
-  content += '<form method="POST">'
-  content += '<table width="70%">'
-  content += '<tr align="left"><th>ID</th><th>Item Name</th></tr>'
-  for item in items:
-    content += '<tr align="left"><td><input type="radio" name="id" value="'+str(item['id'])+'">'+str(item['id'])+'</td><td>'+item['name']+'</td></tr>'
-  content += "</table>"
-  content += '<input type=hidden name="action" value="Delete">'
-  content += 'Select Item Above to Delete: <input type="submit" name="Delete" value="Delete">'
-  content += '<input type="reset">'
-  content += "</form>"
-  content += '<form method="POST">'
-  content += '<input type=hidden name="action" value="Add">'
-  content += '<input type="text" name="item" value="">'
-  content += 'Enter Item Name: <input type="submit" name="Add" value="Add">'
-  content += '<input type="reset">'
-  content += "</form>"
-  content += '<a href="/PROD/listInvoice">Back to Invoices</a>'
-
-  content += "</body></html>"
   return { 'statusCode': 200,
            'headers': {
               "Content-type": "text/html",
