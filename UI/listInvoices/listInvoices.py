@@ -293,7 +293,7 @@ def listInvoiceHandler(event, context):
   content += 'Select Invoice Above to Cancel: <input type="submit" name="Cancel" value="Cancel">'
   content += '<input type="reset">'
   content += "</form>"
-  content += '<form method="POST" action="/PROD/addItem">'
+  content += '<form method="POST" action="/Prod/addItem">'
   content += '<input type=hidden name="action" value="Add">'
   content += '<input type="text" name="item" value="">'
   content += 'Enter Item Name: <input type="submit" name="Add" value="Add">'
