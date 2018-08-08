@@ -186,6 +186,7 @@ def listInvoices():
   return items['Items']
 
 def addItemHandler(event, context):
+  log_error("Event = "+str(event))
   if 'body' in event:
     postparams = json.loads(event['body'])
 
