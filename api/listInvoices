@@ -42,28 +42,6 @@ def getPayPalToken(infile,environment):
   return body['access_token']
 
 def listInvoices(environment,paypal):
-  # Set headers for content and authorization
-  headers = { 'Content-Type': 'application/json',
-              'Authorization': 'Bearer '+paypal}
-
-  # Get paypal url based on environment
-  if environment == "sandbox":
-    url = "https://api.sandbox.paypal.com/v1/invoicing/invoices/"
-  elif environment == "production":
-    url = "https://api.paypal.com/v1/invoicing/invoices/"
-
-  r = requests.post(url,headers=headers,data=json.dumps(data))
-
-  #print("Response is "+r.text)
-
-  print("Status code is "+str(r.status_code))
-
-  if r.status_code == 201:
-    #body = r.json()
-    sendInvoice(environment,paypal,body['id'])
-    #print("Body = "+r.text)
-
-def listInvoices(environment,paypal):
   page = 0
   page_size = 100
   # Set headers for content and authorization
@@ -76,7 +54,7 @@ def listInvoices(environment,paypal):
   elif environment == "production":
     url = "https://api.paypal.com/v1/invoicing/search/"
 
-  data = { "status": ["SENT", "PAID"],
+  data = { "status": ["SENT", "PAID", "CANCELLED"],
            "invoice_date": "2018-07-01 PDT",
            "page": page,
            "page_size": page_size }
@@ -89,7 +67,7 @@ def listInvoices(environment,paypal):
     count = 0
     for invoice in body['invoices']:
       #print(invoice)
-      print(str(count)+" ID = "+invoice['id']+" email = "+invoice['billing_info'][0]['email']+" status = "+invoice['status']+" Invoice date = "+invoice['invoice_date'])
+      print(str(count)+" ID = "+invoice['id']+" Number = "+invoice['number']+" email = "+invoice['billing_info'][0]['email']+" status = "+invoice['status']+" Invoice date = "+invoice['invoice_date'])
       count = count + 1
 
     return body['invoices']
