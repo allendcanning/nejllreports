@@ -155,6 +155,7 @@ def createInvoice(environment,paypal,record):
   if r.status_code == 201:
     body = r.json()
     sendInvoice(environment,paypal,body['id'])
+    addInvoice(body)
     body['status'] = 'Success'
     return body
   else:
