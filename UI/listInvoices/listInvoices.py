@@ -334,12 +334,15 @@ def addInvoiceHandler(event,context):
     content += '</select>'
     content += '<p>Enter amount: $<input type="text" name="amount">'
     content += '<p><input type="submit" value="Create Invoice">'
-    content += '</form></body></html>'
+    content += '</form>'
+    content += '<p><a href="/Prod/listInvoice">Back to Invoices</a>'
+    content += '</body></html>'
   elif action == 'Process':
     result = createInvoice(environment,paypal,record)
     if 'status' in result:
       if result['status'] == 'Success':
-        content = '<p>Successfully added invoice '+result['number']+'<p><a href="/Prod/listInvoice">Back to Invoices</a>'
+        content = '<p>Successfully added invoice '+result['number']
+        content += '<p><a href="/Prod/listInvoice">Back to Invoices</a>'
       else:
         content = '<p>Failed to add invoice'
 
