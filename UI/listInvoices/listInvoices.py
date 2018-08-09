@@ -303,11 +303,11 @@ def addInvoiceHandler(event,context):
         else:
           environment = "production"
         if key == 'email':
-          email = unquote_plus(value)
+          record['email'] = unquote_plus(value)
         if key == 'item':
-          item = unquote_plus(value)
+          record['item'] = unquote_plus(value)
         if key == 'amount':
-          amount = unquote_plus(value)
+          record['amount'] = unquote_plus(value)
     else:
       key = postparams.split('=')[0]
       value = postparams.split('=')[1]
