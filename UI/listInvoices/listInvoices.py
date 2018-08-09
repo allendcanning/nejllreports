@@ -301,6 +301,10 @@ def addInvoiceHandler(event,context):
       else:
         environment = "production"
 
+  # If no action, we spit out form
+  if action == "":
+    action = "Form"
+
   paypal = getPayPalToken(environment)
 
   if action == 'Form':
