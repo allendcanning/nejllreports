@@ -342,7 +342,7 @@ def listInvoiceHandler(event, context):
 
   # Parse the post parameters
   if 'body' in event:
-    postparams = event['body']
+    postparams = str(event['body'])
     if '&' in postparams:
       for token in postparams.split('&'):
         key = token.split('=')[0]
