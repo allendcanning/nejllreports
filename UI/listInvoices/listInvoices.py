@@ -343,6 +343,7 @@ def addInvoiceHandler(event,context):
 
 def listInvoiceHandler(event, context):
   invoice = ""
+  action = "Form"
 
   # Parse the post parameters
   if 'body' in event:
