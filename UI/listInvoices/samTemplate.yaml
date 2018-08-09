@@ -1,12 +1,15 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: adds an invoice
+Globals:
+  Function:
+    Runtime: python3.6
+    Timeout: 10
 Resources:
   addInvoiceFunction:
     Type: AWS::Serverless::Function
     Properties:
       Handler: listInvoices.addInvoiceHandler
-      Runtime: python3.6
       CodeUri: ./
       Policies:
         - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
@@ -21,7 +24,6 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: listInvoices.listInvoiceHandler
-      Runtime: python3.6
       CodeUri: ./
       Policies:
         - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
@@ -36,7 +38,6 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: listInvoices.addItemHandler
-      Runtime: python3.6
       CodeUri: ./
       Policies:
         - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
