@@ -155,27 +155,10 @@ def createInvoice(environment,paypal,record):
   if r.status_code == 201:
     body = r.json()
     sendInvoice(environment,paypal,body['id'])
-    addInvoice(body)
     body['status'] = 'Success'
     return body
   else:
     return { "status": "Failure" }
-
-def addInvoice(record):
-  table_name = "invoices"
-  dynamodb = boto3.resource('dynamodb')
-  t = dynamodb.Table(table_name)
-
-  t_record = {}
-  t_record['id'] = record['id']
-  t_record['invoice_id'] = record['number']
-  t_record['invoice_date'] = record['invoice_date']
-  t_record['invoice_status'] = record['status']
-  t_record['email'] = record['billing_info'][0]['email']
-  t_record['amount'] = record['total_amount']['value']
-  t_record['item'] = record['items'][0]['name']
-
-  t.put_item(Item=t_record)
 
 def updateInvoice(record):
   table_name = "invoices"

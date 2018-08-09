@@ -4,7 +4,7 @@ Description: adds an invoice
 Globals:
   Function:
     Runtime: python3.6
-    Timeout: 10
+    Timeout: 30
 Resources:
   addInvoiceFunction:
     Type: AWS::Serverless::Function
