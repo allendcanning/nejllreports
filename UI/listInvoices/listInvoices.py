@@ -338,21 +338,42 @@ def addInvoiceHandler(event,context):
 
 
 def listInvoiceHandler(event, context):
-  if 'action' in event:
-    action=event['action']
-  else:
-    action="Form"
-  
   invoice = ""
-  
-  if 'invoice' in event:
-    invoice = event['invoice']
-    
+
+  # Parse the post parameters
+  if 'body' in event:
+    postparams = event['body']
+    if '&' in postparams:
+      for token in postparams.split('&'):
+        key = token.split('=')[0]
+        value = token.split('=')[1]
+        if key == 'action':
+          action = unquote_plus(value)
+        if key == 'id':
+          invoice = unquote_plus(value)
+        if key == 'environment':
+          environment = unquote_plus(value)
+        else:
+          environment = "production"
+    else:
+      if '=' in postparams:
+        key = postparams.split('=')[0]
+        value = postparams.split('=')[1]
+        if key == 'action':
+          action = unquote_plus(value)
+        if key == 'id':
+          invoice = unquote_plus(value)
+        if key == 'environment':
+          environment = unquote_plus(value)
+        else:
+          environment = "production"
+
   content = "<html><head><title>MXB Invoices</title></head><body>"
   content += "<h3>MXB Invoices</h3>"
 
   if action == 'Cancel':
-    cancelInvoice(invoice)
+    if invoice != "":
+      cancelInvoice(invoice)
 
   # Print out HTML content
   invoices = listInvoices()

@@ -29,11 +29,16 @@ Resources:
         - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
         - arn:aws:iam::530317771161:policy/ssmPayPal
       Events:
-        listInvoiceAPI:
+        listInvoiceAPIGet:
           Type: Api
           Properties:
             Path: /listInvoice
             Method: get
+        listInvoiceAPIPost:
+          Type: Api
+          Properties:
+            Path: /listInvoice
+            Method: post
   addItemFunction:
     Type: AWS::Serverless::Function
     Properties:
