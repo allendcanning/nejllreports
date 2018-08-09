@@ -167,8 +167,7 @@ def updateInvoice(record):
 
   try:
     response = t.get_item(
-      Key={ 'id': record['id'],
-            'invoice_date': record['invoice_date']
+      Key={ 'id': record['id']
           }
     )
   except ClientError as e:
@@ -200,6 +199,31 @@ def updateInvoice(record):
         }
       )
 
+def cancelInvoicePaypal(environment,paypal,invoice):
+  # Set authorization header
+  headers = {'Content-Type': 'application/json',
+             'Authorization': 'Bearer '+paypal}
+
+  if environment == "sandbox":
+    url = "https://api.sandbox.paypal.com/v1/invoicing/invoices/"+invoice+"/cancel"
+  elif environment == "production":
+    url = "https://api.paypal.com/v1/invoicing/invoices/"+invoice+"/cancel"
+
+  data = {
+           "subject": "Invoice cancelled",
+           "send_to_merchant": False,
+           "send_to_payer": False
+         }
+
+  r = requests.post(url,headers=headers,data=json.dumps(data))
+
+  if r.status_code == 204:
+    msg = "Successfully cancelled invoice "+invoice
+  else:
+    msg = "Error cancelling invoice "+invoice+": Status code = "+str(r.status_code)+" "+r.text
+
+  return msg
+
 def cancelInvoice(record):
   table_name = "invoices"
   dynamodb = boto3.resource('dynamodb')
@@ -207,8 +231,7 @@ def cancelInvoice(record):
 
   try:
     response = t.get_item(
-      Key={ 'id': record['id'],
-            'invoice_date': record['invoice_date']
+      Key={ 'id': record['id']
           }
     )
   except ClientError as e:
@@ -342,6 +365,7 @@ def addInvoiceHandler(event,context):
 
 
 def listInvoiceHandler(event, context):
+  environment = "production"
   invoice = ""
   action = "Form"
 
@@ -376,8 +400,11 @@ def listInvoiceHandler(event, context):
   content = "<html><head><title>MXB Invoices</title></head><body>"
   content += "<h3>MXB Invoices</h3>"
 
+  paypal = getPayPalToken(environment)
+
   if action == 'Cancel':
     if invoice != "":
+      cancelInvoicePaypal(environment,paypal,invoice)
       cancelInvoice(invoice)
 
   # Print out HTML content
@@ -419,9 +446,9 @@ def listInvoiceHandler(event, context):
   content += "</body></html>"
   return { 'statusCode': 200,
            'headers': {
-              "Content-type": "text/html",
-              "Cache-Control": "no-store, must-revalidate",
-              "Expires": "0"
+              'Content-type': 'text/html',
+              'Cache-Control': 'no-store, must-revalidate',
+              'Expires': '0'
             },
             'body': content
           }
