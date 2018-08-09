@@ -325,7 +325,7 @@ def addInvoiceHandler(event,context):
     content = "<html><head><title>MXB Create Invoice</title></head><body>"
     content += "<h3>MXB Create Invoice</h3>"
 
-    content += '<form method="post" action="'+context['path']+'">'
+    content += '<form method="post" action="'+event['path']+'">'
     content += '<input type="hidden" name="action" value="Process">'
     content += '<p>Enter billing email address: <input type="email" name="email">'
     content += '<p>Select billing item: <select name="item">'
@@ -370,7 +370,7 @@ def listInvoiceHandler(event, context):
 
   # Print out HTML content
   invoices = listInvoices()
-  content += '<form method="POST" action="'+context['path']+'">'
+  content += '<form method="POST" action="'+event['path']+'">'
   content += '<table width="85%">'
   content += '<tr align="left"><th>Invoice ID</th><th>Email</th><th>Status</th><th>Item Name</th><th>Amount</th><th>Invoice Date</th><th>Payment Amount</th><th>Payment Date</th><th>Payment Type</th></tr>'
   for invoice in invoices:
