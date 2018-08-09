@@ -394,6 +394,8 @@ def listInvoiceHandler(event, context):
   return { 'statusCode': 200,
            'headers': {
               "Content-type": "text/html",
+              "Cache-Control": "no-store, must-revalidate"
+              "Expires": "0"
             },
             'body': content
           }
