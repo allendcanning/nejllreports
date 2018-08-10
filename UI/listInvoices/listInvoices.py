@@ -254,15 +254,16 @@ def cancelInvoice(id):
 def listInvoices(filters):
   table_name = "invoices"
   t = dynamodb.Table(table_name)
-  fe = ""
+  fes = [ 'PAID', 'CANCELLED', 'SENT' ]
+  newfe = [ ]
 
-  for filter in filters:
-    if fe != "":
-      fe += "AND invoice_status not contains '"+filter+"'"
+  for fe in fes:
+    if fe in filters:
+      continue
     else:
-      fe += "invoice_status not contains '"+filter+"'"
+      newfe.append(fe)
   try:
-    items = t.scan(FilterExpression=fe)
+    items = t.scan(FilterExpression=Attr('invoice_status').is_in(newfe))
   except ClientError as e:
     log_error("Error is"+e.response['Error']['Message'])
 
