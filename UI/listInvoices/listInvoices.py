@@ -438,10 +438,10 @@ def listInvoiceHandler(event, context):
       content += '<td>&nbsp;</td>'
     content += '</tr>'
   content += '<input type=hidden name="action" value="Cancel">'
-  content += '<tr><td align="left">'
+  content += '<tr><td colspan="3" align="left">'
   content += 'Select Invoice Above to Cancel: <input type="submit" name="Cancel" value="Cancel">'
   content += '<input type="reset"></td>'
-  content += '<td align="right"> Filter: '
+  content += '<td colspan="6" align="right"> Filter: '
   content += 'CANCELLED <input type="checkbox" name="filter" value="CANCELLED"'
   if 'CANCELLED' in filters:
     content += ' checked'
