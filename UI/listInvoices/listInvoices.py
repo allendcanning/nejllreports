@@ -443,15 +443,15 @@ def listInvoiceHandler(event, context):
   content += 'Select Invoice Above to Cancel: <input type="submit" name="Cancel" value="Cancel">'
   content += '<input type="reset"></td>'
   content += '<td colspan="6" align="right"> Filter: '
-  content += 'CANCELLED <input onclick="document.form.listInvoices.submit()" type="checkbox" name="filter" value="CANCELLED"'
+  content += 'CANCELLED <input onclick="document.forms.namedItem('listInvoices').submit()" type="checkbox" name="filter" value="CANCELLED"'
   if 'CANCELLED' in filters:
     content += ' checked'
   content += '> '
-  content += 'SENT <input onclick="document.form.listInvoices.submit()" type="checkbox" name="filter" value="SENT"'
+  content += 'SENT <input onclick="document.forms.namedItem('listInvoices').submit()" type="checkbox" name="filter" value="SENT"'
   if 'SENT' in filters:
     content += ' checked'
   content += '> '
-  content += 'PAID <input onclick="document.form.listInvoices.submit()" type="checkbox" name="filter" value="PAID"'
+  content += 'PAID <input onclick="document.forms.namedItem('listInvoices').submit()" type="checkbox" name="filter" value="PAID"'
   if 'PAID' in filters:
     content += ' checked'
   content += '></td>'
