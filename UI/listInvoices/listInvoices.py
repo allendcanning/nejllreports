@@ -4,6 +4,7 @@ import os, time
 import json
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
+from botocore.exceptions import ClientError
 from botocore.vendored import requests
 from urllib.parse import unquote_plus
 
