@@ -369,7 +369,6 @@ def listInvoiceHandler(event, context):
   environment = "production"
   invoice = ""
   action = "Form"
-  filter = "CANCELLED"
   filters = []
 
   # Parse the post parameters
@@ -413,9 +412,6 @@ def listInvoiceHandler(event, context):
     if invoice != "":
       cancelInvoicePaypal(environment,paypal,invoice)
       #cancelInvoice(invoice)
-
-  if len(filters) <= 1:
-    filters.append(filter)
 
   # Print out HTML content
   invoices = listInvoices(filters)
