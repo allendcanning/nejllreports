@@ -251,10 +251,20 @@ def cancelInvoice(id):
       }
     )
 
-def listInvoices():
+def listInvoices(filters):
   table_name = "invoices"
   t = dynamodb.Table(table_name)
-  items = t.scan()
+  fe = ""
+
+  for filter in filters:
+    if fe != "":
+      fe += "AND invoice_status not contains '"+filter+"'"
+    else:
+      fe += "invoice_status not contains '"+filter+"'"
+  try:
+    items = t.scan(FilterExpression=fe)
+  except ClientError as e:
+    log_error("Error is"+e.response['Error']['Message'])
 
   return items['Items']
 
@@ -358,6 +368,8 @@ def listInvoiceHandler(event, context):
   environment = "production"
   invoice = ""
   action = "Form"
+  filter = "CANCELLED"
+  filters = []
 
   # Parse the post parameters
   if 'body' in event:
@@ -370,6 +382,8 @@ def listInvoiceHandler(event, context):
           action = unquote_plus(value)
         if key == 'id':
           invoice = unquote_plus(value)
+        if key == 'filter':
+          filters.append(unquote_plus(value))
         if key == 'environment':
           environment = unquote_plus(value)
         else:
@@ -382,6 +396,8 @@ def listInvoiceHandler(event, context):
           action = unquote_plus(value)
         if key == 'id':
           invoice = unquote_plus(value)
+        if key == 'filter':
+          filters.append(unquote_plus(value))
         if key == 'environment':
           environment = unquote_plus(value)
         else:
@@ -397,8 +413,11 @@ def listInvoiceHandler(event, context):
       cancelInvoicePaypal(environment,paypal,invoice)
       #cancelInvoice(invoice)
 
+  if len(filters) <= 1:
+    filters.append(filter)
+
   # Print out HTML content
-  invoices = listInvoices()
+  invoices = listInvoices(filters)
   content += '<form method="POST" action="">'
   content += '<table width="85%">'
   content += '<tr align="left"><th>Invoice ID</th><th>Email</th><th>Status</th><th>Item Name</th><th>Amount</th><th>Invoice Date</th><th>Payment Amount</th><th>Payment Date</th><th>Payment Type</th></tr>'
@@ -417,11 +436,12 @@ def listInvoiceHandler(event, context):
     else:
       content += '<td>&nbsp;</td>'
     content += '</tr>'
-  content += "</table>"
   content += '<input type=hidden name="action" value="Cancel">'
+  content += '<tr><td align="left">'
   content += 'Select Invoice Above to Cancel: <input type="submit" name="Cancel" value="Cancel">'
-  content += '<input type="reset">'
-  content += 'Filter: CANCELLED <input type="checkbox" name="filter" value="CANCELLED"> SENT <input type="checkbox" name="filter" value="SENT"> PAID <input type="checkbox" name="filter" value="PAID">'
+  content += '<input type="reset"></td>'
+  content += '<td align="right">Filter: CANCELLED <input type="checkbox" name="filter" value="CANCELLED"> SENT <input type="checkbox" name="filter" value="SENT"> PAID <input type="checkbox" name="filter" value="PAID"></td>'
+  content += "</tr></table>"
   content += "</form>"
   content += '<hr><form method="POST" action="/Prod/addInvoice">'
   content += '<input type="hidden" name="action" value="Form">'
