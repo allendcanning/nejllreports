@@ -225,42 +225,31 @@ def cancelInvoicePaypal(environment,paypal,invoice):
 
   return msg
 
-def cancelInvoice(record):
+def cancelInvoice(id):
   table_name = "invoices"
   dynamodb = boto3.resource('dynamodb')
   t = dynamodb.Table(table_name)
 
   try:
     response = t.get_item(
-      Key={ 'id': record['id']
+      Key={ 'id': id
           }
     )
   except ClientError as e:
     log_error("Error is"+e.response['Error']['Message'])
-    # Record doesn't exist so we add it
-    t_record = {}
-    t_record['id'] = record['id']
-    t_record['invoice_id'] = record['number']
-    t_record['invoice_date'] = record['invoice_date']
-    t_record['invoice_status'] = record['status']
-    t_record['email'] = record['billing_info'][0]['email']
-    t_record['amount'] = record['total_amount']['value']
-    t_record['item'] = record['items'][0]['name']
-
-    t.put_item(Item=t_record)
   else:
+    record = response['item']
     log_error("Updating record")
-    if record['status'] == 'CANCELLED':
-      t.update_item(
-        Key={
-             'id': record['id'],
-             'invoice_date': record['invoice_date']
-        },
-        UpdateExpression="set invoice_status=:st",
-        ExpressionAttributeValues={
-          ':st': record['status']
-        }
-      )
+    t.update_item(
+      Key={
+           'id': record['id'],
+           'invoice_date': record['invoice_date']
+      },
+      UpdateExpression="set invoice_status=:st",
+      ExpressionAttributeValues={
+        ':st': 'CANCELLED'
+      }
+    )
 
 def listInvoices():
   table_name = "invoices"
@@ -406,7 +395,7 @@ def listInvoiceHandler(event, context):
   if action == 'Cancel':
     if invoice != "":
       cancelInvoicePaypal(environment,paypal,invoice)
-      cancelInvoice(invoice)
+      #cancelInvoice(invoice)
 
   # Print out HTML content
   invoices = listInvoices()
