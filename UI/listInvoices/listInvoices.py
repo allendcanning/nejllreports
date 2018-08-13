@@ -434,7 +434,7 @@ def listInvoiceHandler(event, context):
       content += '<td>&nbsp;</td>'
     content += '</tr>'
   content += '<tr><td colspan="9"><hr></td></tr>'
-  content += '<tr><td colspan="3" align="left">'
+  content += '<tr><td colspan="4" align="left">'
   content += '<input type=hidden name="action" value="Cancel">'
   content += 'Select Invoice Above to Cancel: <input type="submit" name="Cancel" value="Cancel">'
   content += '<input type="reset"></td>'
