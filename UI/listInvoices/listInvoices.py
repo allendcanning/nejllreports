@@ -3,6 +3,7 @@ from __future__ import division
 import os, time
 import json
 import boto3
+import ast
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
 from botocore.vendored import requests
@@ -370,6 +371,12 @@ def listInvoiceHandler(event, context):
   invoice = ""
   action = "Form"
   filters = []
+
+  if 'Cookie' in event['headers']:
+    cookie = event['headers']['Cookie']
+    if 'Filter' in cookie:
+      cookiedata = cookie.split['=']
+      filter = ast.literal_eval(cookiedata)
 
   # Parse the post parameters
   if 'body' in event:
