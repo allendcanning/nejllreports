@@ -465,10 +465,13 @@ def listInvoiceHandler(event, context):
   content += "</form>"
 
   content += "</body></html>"
+
+  cookie = 'Filter='+json.dumps(filters)
   return { 'statusCode': 200,
            'headers': {
               'Content-type': 'text/html',
               'Cache-Control': 'no-store, must-revalidate',
+              'Set-Cookie': cookie,
               'Expires': '0'
             },
             'body': content
