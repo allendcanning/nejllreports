@@ -372,8 +372,8 @@ def listInvoiceHandler(event, context):
   action = "Form"
   filters = []
 
-  if 'Cookie' in event['input']['headers']:
-    cookie = event['input']['headers']['Cookie']
+  if 'Cookie' in event['headers']:
+    cookie = event['headers']['Cookie']
     if 'Filter' in cookie:
       cookiedata = cookie.split['=']
       filter = ast.literal_eval(cookiedata)
