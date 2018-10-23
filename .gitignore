@@ -2,3 +2,4 @@ paypal.yaml
 client_secret.json
 credentials.json
 service_secret.json
+.DS_Store

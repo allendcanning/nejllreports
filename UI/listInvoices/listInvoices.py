@@ -411,8 +411,9 @@ def listInvoiceHandler(event, context):
         else:
           environment = "production"
 
-  content = "<html><head><title>MXB Invoices</title></head><body>"
-  content += "<h3>MXB Invoices</h3>"
+  content = "<html><head><title>MXB Invoices</title></head>"
+  content += "<script src=\"https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js\"></script>"
+  content += "<body><h3>MXB Invoices</h3>"
 
   paypal = getPayPalToken(environment)
 
@@ -423,24 +424,28 @@ def listInvoiceHandler(event, context):
 
   # Print out HTML content
   invoices = listInvoices(filters)
+  content += '<div ng-app="listInvoices" ng-controller="invoiceCtrl">'
   content += '<form id="listInvoices" method="POST" action="">'
   content += '<table width="85%">'
   content += '<tr align="left"><th>Invoice ID</th><th>Email</th><th>Status</th><th>Item Name</th><th>Amount</th><th>Invoice Date</th><th>Payment Amount</th><th>Payment Date</th><th>Payment Type</th></tr>'
-  for invoice in invoices:
-    content += '<tr align="left"><td><input type="radio" name="id" value="'+str(invoice['id'])+'">'+str(invoice['invoice_id'])+'</td><td>'+invoice['email']+'</td><td>'+invoice['invoice_status']+'</td><td>'+invoice['item']+'</td><td>'+invoice['amount']+'</td><td>'+invoice['invoice_date']+'</td>'
-    if 'payment_amount' in invoice:
-      content += '<td>'+invoice['payment_amount']+'</td>'
-    else:
-      content += '<td>&nbsp;</td>'
-    if 'payment_date' in invoice:
-      content += '<td>'+invoice['payment_date']+'</td>'
-    else:
-      content += '<td>&nbsp;</td>'
-    if 'payment_type' in invoice:
-      content += '<td>'+invoice['payment_type']+'</td>'
-    else:
-      content += '<td>&nbsp;</td>'
-    content += '</tr>'
+  content += '<tr ng-repeat="x in invoices">'
+  content += ' <td> {{ x.invoice_id }} </td>'
+  content += '</tr>'
+#  for invoice in invoices:
+#    content += '<tr align="left"><td><input type="radio" name="id" value="'+str(invoice['id'])+'">'+str(invoice['invoice_id'])+'</td><td>'+invoice['email']+'</td><td>'+invoice['invoice_status']+'</td><td>'+invoice['item']+'</td><td>'+invoice['amount']+'</td><td>'+invoice['invoice_date']+'</td>'
+#    if 'payment_amount' in invoice:
+#      content += '<td>'+invoice['payment_amount']+'</td>'
+#    else:
+#      content += '<td>&nbsp;</td>'
+#    if 'payment_date' in invoice:
+#      content += '<td>'+invoice['payment_date']+'</td>'
+#    else:
+#      content += '<td>&nbsp;</td>'
+#    if 'payment_type' in invoice:
+#      content += '<td>'+invoice['payment_type']+'</td>'
+#    else:
+#      content += '<td>&nbsp;</td>'
+#    content += '</tr>'
   content += '<tr><td colspan="9"><hr></td></tr>'
   content += '<tr><td colspan="4" align="left">'
   content += '<input type=hidden name="action" value="Cancel">'
@@ -460,6 +465,14 @@ def listInvoiceHandler(event, context):
     content += ' checked'
   content += '></td>'
   content += "</tr></table>"
+  content += '</div>'
+
+  content += '<script>'
+  content += 'var app = angular.module(\'listInvoices\', []);'
+  content += 'app.controller(\'invoiceCtrl\', function($scope) {'
+  content += '  $scope.invoices = '+string(invoices)+';'
+  content += '});'
+  content += '</script>'
   content += "</form>"
   content += '<hr><form method="POST" action="/Prod/addInvoice">'
   content += '<input type="hidden" name="action" value="Form">'
