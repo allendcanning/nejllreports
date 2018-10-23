@@ -471,7 +471,7 @@ def listInvoiceHandler(event, context):
   content += '<script>'
   content += 'var app = angular.module(\'listInvoices\', []);'
   content += 'app.controller(\'invoiceCtrl\', function($scope) {'
-  content += '  $scope.invoices = '+string(invoices)+';'
+  content += '  $scope.invoices = '+str(invoices)+';'
   content += '});'
   content += '</script>'
   content += "</form>"
