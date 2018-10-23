@@ -372,12 +372,13 @@ def listInvoiceHandler(event, context):
   action = "Form"
   filters = []
 
-  if 'Cookie' in event['headers']:
-    oldcookie = event['headers']['Cookie']
-    if 'Filter' in oldcookie:
-      cookiedata = oldcookie.split('=')[1]
-      filters = ast.literal_eval(cookiedata)
-      log_error("Filter = "+str(filters))
+  if 'headers' in event:
+    if 'Cookie' in event['headers']:
+      oldcookie = event['headers']['Cookie']
+      if 'Filter' in oldcookie:
+        cookiedata = oldcookie.split('=')[1]
+        filters = ast.literal_eval(cookiedata)
+        log_error("Filter = "+str(filters))
 
   # Parse the post parameters
   if 'body' in event:
