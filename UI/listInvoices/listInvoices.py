@@ -430,10 +430,11 @@ def listInvoiceHandler(event, context):
   content += '<table width="85%">'
   content += '<tr align="left"><th>Invoice ID</th><th>Email</th><th>Status</th><th>Item Name</th><th>Amount</th><th>Invoice Date</th><th>Payment Amount</th><th>Payment Date</th><th>Payment Type</th></tr>'
   content += '<tr align="left" ng-repeat="x in invoices">'
-  content += ' <td><input type="radio" name="id" value="{{ x.invoice_id }}">{{ x.invoice_id}}</td><td>{{ x.email}}</td><td>{{ x.invoice_status }}</td><td>{{ x.item }}</td><td>{{ x.amount }}</td><td>{{ x.invoice_date }}</td>'
+  content += ' <td><input type="radio" name="id" value="{{ x.invoice_id }}">{{ x.invoice_id}}</td><td>{{ x.email}}</td><td>{{ x.invoice_status }}</td><td>{{ x.item }}</td><td>{{ x.amount | currency }}</td><td>{{ x.invoice_date }}</td>'
   content += '</tr>'
 #  for invoice in invoices:
 #    content += '<tr align="left"><td><input type="radio" name="id" value="'+str(invoice['id'])+'">'+str(invoice['invoice_id'])+'</td><td>'+invoice['email']+'</td><td>'+invoice['invoice_status']+'</td><td>'+invoice['item']+'</td><td>'+invoice['amount']+'</td><td>'+invoice['invoice_date']+'</td>'
+     content += '<td>{{ x.payment_amount | currency }}</td><td>{{ x.payment_date }}</td><td>{{ x.payment_type }}</td>'
 #    if 'payment_amount' in invoice:
 #      content += '<td>'+invoice['payment_amount']+'</td>'
 #    else:
