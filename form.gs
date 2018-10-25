@@ -2,12 +2,18 @@ function onFormSubmit(e) {
   var data = {name: e.namedValues['Name'][0], email: e.namedValues['Email'][0], item: e.namedValues['Item'][0]};
   var environment = "production";
   
-  if (data.item == "Tuition") {
-    amount = "1995.00";
-  } else if (data.item == "Camp") {
-    amount = "600.00";
-  }
+  var vals = data.item.split('\$');
+  
+  var amount = vals[1];
+  
+  //if (data.item == "Tuition") {
+  //  amount = "1995.00";
+  //} else if (data.item == "Camp") {
+  //  amount = "600.00";
+  //}
     
+  //Logger.log("Amount = "+amount);
+  
   var token = getPayPaltoken(environment);
   
   var record = { email: data.email,
@@ -15,6 +21,7 @@ function onFormSubmit(e) {
                 amount: amount
                };
   
+  // Create invoice at paypal
   createInvoice(environment,token,record);
 }
 
@@ -81,7 +88,7 @@ function sendPayPalInvoice(environment,paypal,id) {
   if (response.getResponseCode() != 202) {
     sendEmail("canning@nejll.org","Unable to send invoice","Unable to send invoice "+id+", please check log files");
   } else {
-    Logger.log("Sent invoice # "+id);
+    Logger.log("Sent invoice #"+id);
   }
 }
   
