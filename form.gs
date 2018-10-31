@@ -86,7 +86,7 @@ function sendPayPalInvoice(environment,paypal,id) {
   //Logger.log("Calling fetch for "+url+' with Options: '+JSON.stringify(options));
   response = UrlFetchApp.fetch(url,options);
   if (response.getResponseCode() != 202) {
-    sendEmail("canning@nejll.org","Unable to send invoice","Unable to send invoice "+id+", please check log files");
+    sendEmail("core@nejll.org","Unable to send invoice","Unable to send invoice "+id+", please check log files");
   } else {
     Logger.log("Sent invoice #"+id);
   }
@@ -152,6 +152,6 @@ function createInvoice(environment,paypal,record) {
     sendPayPalInvoice(environment,paypal,body['id'])
   } else {
     Logger.log("Unable to create invoice, sending email to admins");
-    sendEmail('canning@nejll.org','Unable to create invoice','Unable to create invoice, please check logs');
+    sendEmail('core@nejll.org','Unable to create invoice','Unable to create invoice, please check logs');
   }
 }
